@@ -34,4 +34,4 @@ Thumbs.db
 # Credentials (Google, API keys)
 credentials.json
 *.key
-bot_token.txt 
+telegram_bot_token.txt 
