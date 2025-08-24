@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # -----------------------------
 # Environment variables
 # -----------------------------
-TOKEN = os.environ['TELEGRAM_TOKEN']  # Telegram bot token
+TOKEN = os.environ['TELEGRAM_TOKEN']  # Your bot token
 BACKEND_URL = os.environ.get("BACKEND_URL", "https://noncompete-backend.onrender.com")
 PORT = int(os.environ['PORT'])  # Render-assigned port
 HOSTNAME = os.environ['RENDER_EXTERNAL_HOSTNAME']  # Render service hostname
@@ -67,10 +67,10 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_facts))
 
-    print(f"Bot is running as webhook on https://{HOSTNAME}/{TOKEN}...")
+    print(f"Bot is starting as webhook on https://{HOSTNAME}/{TOKEN}...")
     app.run_webhook(
-        listen="0.0.0.0",
-        port=PORT,
-        url_path=TOKEN,
-        webhook_url=f"https://{HOSTNAME}/{TOKEN}"
+        listen="0.0.0.0",         # Must bind to all interfaces
+        port=PORT,                # Render-assigned port
+        url_path=TOKEN,           # Webhook path
+        webhook_url=f"https://{HOSTNAME}/{TOKEN}"  # Telegram webhook URL
     )
