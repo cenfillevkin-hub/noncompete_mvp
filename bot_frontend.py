@@ -4,18 +4,30 @@ import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
+# -----------------------------
+# Logging setup
+# -----------------------------
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Backend URL from environment (Render backend service URL)
+# -----------------------------
+# Environment variables
+# -----------------------------
+TOKEN = os.environ['TELEGRAM_TOKEN']  # Telegram bot token
 BACKEND_URL = os.environ.get("BACKEND_URL", "https://noncompete-backend.onrender.com")
+PORT = int(os.environ['PORT'])  # Render-assigned port
+HOSTNAME = os.environ['RENDER_EXTERNAL_HOSTNAME']  # Render service hostname
 
+# -----------------------------
+# Bot handlers
+# -----------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Hello! Here are some top cases today:")
     try:
-        response = requests.get(f"https://noncompete-backend.onrender.com/top_cases?n=3")
+        response = requests.get(f"{BACKEND_URL}/top_cases?n=3")
         top_cases = response.json().get("top_cases", [])
         for i, case in enumerate(top_cases, start=1):
             summary = case.get("Narrative Summary", "No summary available")
@@ -29,7 +41,7 @@ async def handle_facts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Assessing your facts...")
     try:
         payload = {"facts": user_text}
-        response = requests.post(f"https://noncompete-backend.onrender.com/assess", json=payload)
+        response = requests.post(f"{BACKEND_URL}/assess", json=payload)
         result = response.json()
         criteria_text = "\n".join([f"{k}: {v}" for k, v in result.get("user_criteria", {}).items()])
         await update.message.reply_text(f"Extracted criteria:\n{criteria_text}")
@@ -47,10 +59,18 @@ async def handle_facts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"Error assessing your facts: {e}")
 
+# -----------------------------
+# Main bot setup
+# -----------------------------
 if __name__ == "__main__":
-    TOKEN = os.environ.get("TELEGRAM_TOKEN")
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_facts))
-    print("Bot is running...")
-    app.run_polling()
+
+    print(f"Bot is running as webhook on https://{HOSTNAME}/{TOKEN}...")
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=PORT,
+        url_path=TOKEN,
+        webhook_url=f"https://{HOSTNAME}/{TOKEN}"
+    )
