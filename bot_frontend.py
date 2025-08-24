@@ -15,7 +15,7 @@ BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Hello! Here are some top cases today:")
     try:
-        response = requests.get(f"{BACKEND_URL}/top_cases?n=3")
+        response = requests.get(f"https://noncompete-backend.onrender.com/top_cases?n=3")
         top_cases = response.json().get("top_cases", [])
         for i, case in enumerate(top_cases, start=1):
             summary = case.get("Narrative Summary", "No summary available")
@@ -29,7 +29,7 @@ async def handle_facts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Assessing your facts...")
     try:
         payload = {"facts": user_text}
-        response = requests.post(f"{BACKEND_URL}/assess", json=payload)
+        response = requests.post(f"https://noncompete-backend.onrender.com/assess", json=payload)
         result = response.json()
         criteria_text = "\n".join([f"{k}: {v}" for k, v in result.get("user_criteria", {}).items()])
         await update.message.reply_text(f"Extracted criteria:\n{criteria_text}")
